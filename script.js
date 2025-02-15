@@ -111,7 +111,6 @@ function sendMessage() {
         body: JSON.stringify(payload)
     })
     .then(response => response.json())
-    .then(response => console.log(response))
     .then(data => {
         // 隐藏加载动画
         if (loadingElement) {
