@@ -9,6 +9,16 @@ body {
     height: 100vh;
 }
 
+.h1 {
+    font-size: 2.4rem;
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: center;
+    letter-spacing: 4px;
+    position: relative;
+    animation: fadeIn 2s ease-in-out;
+}
+
 .chat-container {
     width: 100%;
     max-width: 600px;
@@ -188,8 +198,18 @@ body {
 }
 
 /* 深色模式样式 */
-body.dark-mode {
+body.dark-mode.dark-mode {
     background-color: #1a1a1a;
+}
+
+.dark-mode .h1 {
+    font-size: 2.4rem;
+    font-weight: bold;
+    color: #f8f9fa;
+    text-align: center;
+    letter-spacing: 4px;
+    position: relative;
+    animation: fadeIn 2s ease-in-out;
 }
 
 .dark-mode .chat-container {
