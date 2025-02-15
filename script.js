@@ -92,7 +92,7 @@ function sendMessage() {
     }
 
     const apiKey = 'sk-rbzickexnungolrgsevneipmyebliqbddrsttvbcjncnnivm';
-    const endpoint = 'https://api.siliconflow.cn/v1';
+    const endpoint = 'https://api.siliconflow.cn/v1/chat/completions';
 
     const payload = {
         model: "deepseek-ai/DeepSeek-V3",
