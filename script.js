@@ -129,7 +129,7 @@ function sendMessage() {
             loadingElement.style.display = 'none';
         }
 
-        displayMessage('bot', '出错了，请稍后再试。');
+        displayMessage('bot', '真的出错了，请稍后再试。');
         console.error('Error:', error);
     });
 }
