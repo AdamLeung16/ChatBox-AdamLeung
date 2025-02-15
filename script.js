@@ -97,7 +97,6 @@ function sendMessage() {
     const payload = {
         model: "deepseek-ai/DeepSeek-V3",
         messages: [
-            { role: "system", content: "You are a helpful assistant" },
             { role: "user", content: message }
         ],
         stream: false
@@ -112,6 +111,7 @@ function sendMessage() {
         body: JSON.stringify(payload)
     })
     .then(response => response.json())
+    .then(response => console.log(response))
     .then(data => {
         // 隐藏加载动画
         if (loadingElement) {
