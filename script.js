@@ -53,7 +53,7 @@ function formatMessage(text) {
     return sections.join('');
 }
 
-// 显示消息
+// 显示静态消息
 function displayMessage(role, message) {
     const messagesContainer = document.getElementById('messages');
     const messageElement = document.createElement('div');
@@ -76,8 +76,32 @@ function displayMessage(role, message) {
     // 平滑滚动到底部
     messageElement.scrollIntoView({ behavior: 'smooth' });
 }
+// 显示动态消息
+function createMessage(role) {
+    const messagesContainer = document.getElementById('messages');
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${role}`;
+    
+    const avatar = document.createElement('img');
+    avatar.src = role === 'user' ? 'user-avatar.png' : 'bot-avatar.png';
+    avatar.alt = role === 'user' ? 'User' : 'Bot';
 
-function sendMessage() {
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    messageElement.appendChild(avatar);
+    messageElement.appendChild(messageContent);
+    messagesContainer.appendChild(messageElement);
+    return [messageContent,messageElement];
+}
+function updateMessage(messageContent,content) {
+    messageContent.innerHTML += content;
+}
+function endMessage(messageContent,messageElement) {
+    messageContent.innerHTML = formatMessage(messageContent.innerHTML);
+    messageElement.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function sendMessage() {
     const inputElement = document.getElementById('chat-input');
     const message = inputElement.value;
     if (!message.trim()) return;
@@ -95,43 +119,120 @@ function sendMessage() {
     const endpoint = 'https://api.siliconflow.cn/v1/chat/completions';
 
     const payload = {
-        model: "deepseek-ai/DeepSeek-V3",
+        model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
         messages: [
             { role: "user", content: message }
         ],
-        stream: false
+        stream: true
+    };
+    
+    const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify(payload)
+        })
+    try{
+        // if(response.ok) displayMessage('bot', "ok.200");
+        const reader = response.body.getReader();
+        let decoder = new TextDecoder();
+        let chunks = [];
+        let messageResult = createMessage('bot');
+        let messageContent = messageResult[0];
+        let messageElement = messageResult[1];
+        while (true) {
+            const { done, value } = await reader.read();
+            var text = decoder.decode(value, { stream: true });
+            if (done) {
+                endMessage(messageContent,messageElement);
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                break;
+            }
+            // 解码每个分块的数据
+            let contents = extractContentFromSSE(text);
+            for(let content of contents){
+                updateMessage(messageContent,content);
+                chunks.push(content);
+            }
+        }
+    }
+    catch(error){
+        // 隐藏加载动画
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+
+        displayMessage('bot', '出错了，请稍后再试。'+error.toString());
+        console.error('Error:', error);
     };
 
-    fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => {
-        // 隐藏加载动画
-        if (loadingElement) {
-            loadingElement.style.display = 'none';
-        }
+    // fetch(endpoint, {
+    //     method: 'POST',
+    //     headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': `Bearer ${apiKey}`
+    //     },
+    //     body: JSON.stringify(payload)
+    // })
+    // .then(response => response.json())
+    // .then(data => {
+    //     // 隐藏加载动画
+    //     if (loadingElement) {
+    //         loadingElement.style.display = 'none';
+    //     }
 
-        if (data.choices && data.choices.length > 0) {
-            displayMessage('bot', data.choices[0].message.content);
-        } else {
-            displayMessage('bot', '出错了，请稍后再试。');
-        }
-    })
-    .catch(error => {
-        // 隐藏加载动画
-        if (loadingElement) {
-            loadingElement.style.display = 'none';
-        }
+    //     if (data.choices && data.choices.length > 0) {
+    //         displayMessage('bot', data.choices[0].message.content);
+    //     } else {
+    //         displayMessage('bot', '出错了，请稍后再试。');
+    //     }
+    // })
+    // .catch(error => {
+    //     // 隐藏加载动画
+    //     if (loadingElement) {
+    //         loadingElement.style.display = 'none';
+    //     }
 
-        displayMessage('bot', '出错了，请稍后再试。');
-        console.error('Error:', error);
-    });
+    //     displayMessage('bot', '出错了，请稍后再试。');
+    //     console.error('Error:', error);
+    // });
+}
+
+function extractContentFromSSE(sseString) {
+    try {
+        const events = sseString.split('\n\n').slice(0,-1);
+        var contents = [];
+        for(var i=0;i<events.length;i++){
+            const jsonStr = events[i].slice(6);
+            if (jsonStr=="[DONE]") break;
+            const data = JSON.parse(jsonStr);
+            var content = data.choices[0].delta.content;
+            if (content==null||content=="") continue;
+            contents.push(content);
+      }
+      return contents;
+    } catch (error) {
+        displayMessage('bot', error.toString());
+        return [];
+    }
+}
+
+function type() {
+    let enableCursor = true;  // 启用光标效果
+    if (char_index < text.length) {
+      let txt = document.getElementById('answer').value;
+      let cursor = enableCursor ? "|" : "";
+      if (enableCursor && txt.endsWith("|")) {
+        txt = txt.slice(0, -1);
+      }
+      document.getElementById('answer').value = txt + text.charAt(char_index) + cursor;
+      char_index++;
+      setTimeout(type, 1000/5);  // 打字机速度控制, 每秒5个字
+    }
 }
 
 // 添加主题切换功能
