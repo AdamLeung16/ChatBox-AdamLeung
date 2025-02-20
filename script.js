@@ -1,3 +1,51 @@
+var currentApiKey = 'sk-rbzickexnungolrgsevneipmyebliqbddrsttvbcjncnnivm';
+
+// API Key 管理功能
+function showApiKeyManager() {
+    const modal = document.getElementById('apiKeyManager');
+    modal.style.display = 'flex';
+}
+
+function hideApiKeyManager() {
+    const modal = document.getElementById('apiKeyManager');
+    modal.style.display = 'none';
+}
+function updateApiKey() {
+    const input = document.getElementById('apiKeyInput');
+    const apiKey = input.value.trim();
+
+    if (apiKey) {
+        currentApiKey = apiKey;
+
+        // 显示成功提示
+        const statusElement = document.getElementById('currentKeyStatus');
+        statusElement.textContent = apiKey;
+        statusElement.style.color = '#28a745';
+
+        setTimeout(() => {
+            hideApiKeyManager();
+        }, 1000);
+    } else {
+        alert('请输入有效的 API Key');
+    }
+}
+
+function defaultApiKey() {
+    if (confirm('确定要恢复成默认的 API Key 吗？')) {
+        currentApiKey = 'sk-rbzickexnungolrgsevneipmyebliqbddrsttvbcjncnnivm';
+
+        // 显示删除成功提示
+        const statusElement = document.getElementById('currentKeyStatus');
+        statusElement.textContent = 'sk-***...***';
+        statusElement.style.color = '#dc3545';
+
+        setTimeout(() => {
+            hideApiKeyManager();
+        }, 1000);
+    }
+}
+
+
 // 格式化消息文本
 function formatMessage(text) {
     if (!text) return '';
@@ -101,12 +149,17 @@ function endMessage(messageContent,messageElement) {
     messageElement.scrollIntoView({ behavior: 'smooth' });
 }
 
+var messagesList = [];
+
 async function sendMessage() {
     const inputElement = document.getElementById('chat-input');
+    const modelElement = document.getElementById('model-selector');
     const message = inputElement.value;
+    const currentModel = modelElement.value;
     if (!message.trim()) return;
 
     displayMessage('user', message);
+    messagesList.push({role: "user", content: message});
     inputElement.value = '';
 
     // 显示加载动画
@@ -115,30 +168,28 @@ async function sendMessage() {
         loadingElement.style.display = 'block';
     }
 
-    const apiKey = 'sk-rbzickexnungolrgsevneipmyebliqbddrsttvbcjncnnivm';
+    const apiKey = currentApiKey;
     const endpoint = 'https://api.siliconflow.cn/v1/chat/completions';
 
     const payload = {
-        model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-        messages: [
-            { role: "user", content: message }
-        ],
+        model: currentModel,
+        messages: messagesList,
         stream: true
     };
-    
+
     const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify(payload)
-        })
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(payload)
+    })
     try{
         // if(response.ok) displayMessage('bot', "ok.200");
         const reader = response.body.getReader();
         let decoder = new TextDecoder();
-        let chunks = [];
+        let chunks = "";
         let messageResult = createMessage('bot');
         let messageContent = messageResult[0];
         let messageElement = messageResult[1];
@@ -147,6 +198,7 @@ async function sendMessage() {
             var text = decoder.decode(value, { stream: true });
             if (done) {
                 endMessage(messageContent,messageElement);
+                messagesList.push({role: "assistant", content: chunks});
                 if (loadingElement) {
                     loadingElement.style.display = 'none';
                 }
@@ -156,7 +208,7 @@ async function sendMessage() {
             let contents = extractContentFromSSE(text);
             for(let content of contents){
                 updateMessage(messageContent,content);
-                chunks.push(content);
+                chunks += content;
             }
         }
     }
@@ -221,33 +273,22 @@ function extractContentFromSSE(sseString) {
     }
 }
 
-function type() {
-    let enableCursor = true;  // 启用光标效果
-    if (char_index < text.length) {
-      let txt = document.getElementById('answer').value;
-      let cursor = enableCursor ? "|" : "";
-      if (enableCursor && txt.endsWith("|")) {
-        txt = txt.slice(0, -1);
-      }
-      document.getElementById('answer').value = txt + text.charAt(char_index) + cursor;
-      char_index++;
-      setTimeout(type, 1000/5);  // 打字机速度控制, 每秒5个字
-    }
-}
-
 // 添加主题切换功能
 function toggleTheme() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
     document.body.classList.toggle('dark-mode');
     const chatContainer = document.querySelector('.chat-container');
     const messages = document.querySelector('.messages');
+    const settingBar = document.querySelector('.settings-bar');
     
     // 同时切换容器的深色模式
     chatContainer.classList.toggle('dark-mode');
     messages.classList.toggle('dark-mode');
+    settingBar.classList.toggle('dark-mode');
     
-    // 保存主题设置
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    localStorage.setItem('darkMode', isDarkMode);
+    // 保存主题
+    document.getElementById('themeToggle').checked = !isDarkMode;
+    localStorage.setItem('darkMode', !isDarkMode);
 }
 
 // 页面加载时检查主题设置
@@ -257,6 +298,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('dark-mode');
         document.querySelector('.chat-container').classList.add('dark-mode');
         document.querySelector('.messages').classList.add('dark-mode');
+        document.querySelector('.settings-bar').classList.add('dark-mode');
+        document.getElementById('themeToggle').checked = true;
     }
 });
 

@@ -12,17 +12,61 @@
     <div class="chat-container">
         <div class="h1">ChatBox-🦐</div>
         </br>
+        <!-- 添加顶部设置栏 -->
+        <div class="settings-bar">
+            <div class="settings-left">
+                <div class="model-select">
+                    <select id="model-selector">
+                        <option value="deepseek-ai/DeepSeek-R1-Distill-Llama-70B">DeepSeek-R1-Distill-Llama-70B</option>
+                        <option value="deepseek-ai/DeepSeek-R1">Deepseek-R1</option>
+                        <option value="deepseek-ai/DeepSeek-V3">DeepSeek-V3</option>
+                        <option value="deepseek-ai/DeepSeek-R1-Distill-Llama-8B">DeepSeek-R1-Distill-Llama-8B</option>
+                        <option value="Qwen/QVQ-72B-Preview">QVQ-72B-Preview</option>
+                    </select>
+                </div>
+                
+                <div class="api-key-manager">
+                    <button onclick="showApiKeyManager()" class="api-key-btn">
+                        <span class="key-icon">🔑</span>
+                        <span id="apiKeyStatus">API Key</span>
+                    </button>
+                </div>
+                
+                <div class="theme-toggle">
+                    <span>🌞</span>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle" onclick="toggleTheme()">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>🌙</span>
+                </div>
+            </div>
+        </div>
         <div class="messages" id="messages"></div>
         <div id="loading" class="loading" style="display: none;">思考中...</div>
         <div class="input-container">
             <input id="chat-input" type="text" placeholder="输入消息..." />
             <button onclick="sendMessage()">发送</button>
-            <div class="dropdown">
-                <button onclick="toggleDropdown(event)">更多</button>
-                <div class="dropdown-content" id="dropdownMenu">
-                    <div class="dropdown-item" onclick="toggleTheme()">
-                        <span>浅色/深色</span>
-                    </div>
+        </div>
+    </div>
+
+    <!-- API Key 管理弹窗 -->
+    <div id="apiKeyManager" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>API Key 管理</h2>
+                <button onclick="hideApiKeyManager()" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="api-key-status">
+                    <p>默认API Key: <span id="currentKeyStatus" >sk-***...***</span></p>
+                </div>
+                <div class="api-key-input">
+                    <input type="password" id="apiKeyInput" placeholder="输入新的 API Key" autocomplete="off"/>
+                </div>
+                <div class="api-key-actions">
+                    <button onclick="updateApiKey()" class="primary-btn">更新</button>
+                    <button onclick="defaultApiKey()" class="danger-btn">恢复默认</button>
                 </div>
             </div>
         </div>
