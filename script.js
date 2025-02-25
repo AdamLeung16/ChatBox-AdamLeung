@@ -1,4 +1,44 @@
-var currentApiKey = 'sk-rbzickexnungolrgsevneipmyebliqbddrsttvbcjncnnivm';
+var endpoint_ApiKey = {
+    "https://api.deepseek.com/v1/chat/completions":"sk-81d0df44ff8444999a663505386913dc",
+    "https://api.siliconflow.cn/v1/chat/completions":"sk-rbzickexnungolrgsevneipmyebliqbddrsttvbcjncnnivm"
+};
+var currentApiKey = '';
+var endpoint_models = {
+    "https://api.deepseek.com/v1/chat/completions": [
+        { value: "deepseek-chat", text: "Deepseek-V3" },
+        { value: "deepseek-reasoner", text: "DeepSeek-R1" },
+    ],
+    "https://api.siliconflow.cn/v1/chat/completions": [
+        { value: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B", text: "DeepSeek-R1-Distill-Llama-70B" },
+        { value: "deepseek-ai/DeepSeek-R1", text: "Deepseek-R1" },
+        { value: "deepseek-ai/DeepSeek-V3", text: "DeepSeek-V3" },
+        { value: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B", text: "DeepSeek-R1-Distill-Llama-8B" },
+        { value: "Qwen/QVQ-72B-Preview", text: "QVQ-72B-Preview" }
+    ]
+};
+
+function models_from_endpoint(){
+    // 获取 endpoint 和 model 的下拉栏元素
+    const endpointSelector = document.getElementById('endpoint-selector');
+    const modelSelector = document.getElementById('model-selector');
+    const selectedEndpoint = endpointSelector.value;
+    const models = endpoint_models[selectedEndpoint] || [];
+
+    // 清空当前的 model 选项
+    modelSelector.innerHTML = '';
+
+    // 添加新的 model 选项
+    models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.value;
+        option.text = model.text;
+        modelSelector.appendChild(option);
+    });
+    initialApiKey();
+}
+// 手动触发初始化
+document.getElementById('endpoint-selector').dispatchEvent(new Event('change'));
+
 
 // API Key 管理功能
 function showApiKeyManager() {
@@ -32,7 +72,8 @@ function updateApiKey() {
 
 function defaultApiKey() {
     if (confirm('确定要恢复成默认的 API Key 吗？')) {
-        currentApiKey = 'sk-rbzickexnungolrgsevneipmyebliqbddrsttvbcjncnnivm';
+        const endpointSelector = document.getElementById('endpoint-selector');
+        currentApiKey = endpoint_ApiKey[endpointSelector.value];
 
         // 显示删除成功提示
         const statusElement = document.getElementById('currentKeyStatus');
@@ -43,6 +84,11 @@ function defaultApiKey() {
             hideApiKeyManager();
         }, 1000);
     }
+}
+
+function initialApiKey() {
+    const endpointSelector = document.getElementById('endpoint-selector');
+    currentApiKey = endpoint_ApiKey[endpointSelector.value];
 }
 
 
@@ -153,9 +199,11 @@ var messagesList = [];
 
 async function sendMessage() {
     const inputElement = document.getElementById('chat-input');
+    const endpointElement = document.getElementById('endpoint-selector');
     const modelElement = document.getElementById('model-selector');
     const message = inputElement.value;
     const currentModel = modelElement.value;
+    const endpoint = endpointElement.value;
     if (!message.trim()) return;
 
     displayMessage('user', message);
@@ -169,7 +217,6 @@ async function sendMessage() {
     }
 
     const apiKey = currentApiKey;
-    const endpoint = 'https://api.siliconflow.cn/v1/chat/completions';
 
     const payload = {
         model: currentModel,
@@ -260,7 +307,7 @@ function extractContentFromSSE(sseString) {
         var contents = [];
         for(var i=0;i<events.length;i++){
             const jsonStr = events[i].slice(6);
-            if (jsonStr=="[DONE]") break;
+            if (jsonStr=="[DONE]"||jsonStr=="-alive") break;
             const data = JSON.parse(jsonStr);
             var content = data.choices[0].delta.content;
             if (content==null||content=="") continue;

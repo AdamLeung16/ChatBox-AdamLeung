@@ -15,23 +15,27 @@
         <!-- 添加顶部设置栏 -->
         <div class="settings-bar">
             <div class="settings-left">
+                <div class="endpoint-select">
+                    <select id="endpoint-selector" onchange="models_from_endpoint()">
+                        <option value="https://api.deepseek.com/v1/chat/completions">DeepSeek</option>
+                        <option value="https://api.siliconflow.cn/v1/chat/completions">SiliconFlow</option>
+                    </select>
+                </div>
                 <div class="model-select">
                     <select id="model-selector">
-                        <option value="deepseek-ai/DeepSeek-R1-Distill-Llama-70B">DeepSeek-R1-Distill-Llama-70B</option>
+                        <!-- <option value="deepseek-ai/DeepSeek-R1-Distill-Llama-70B">DeepSeek-R1-Distill-Llama-70B</option>
                         <option value="deepseek-ai/DeepSeek-R1">Deepseek-R1</option>
                         <option value="deepseek-ai/DeepSeek-V3">DeepSeek-V3</option>
                         <option value="deepseek-ai/DeepSeek-R1-Distill-Llama-8B">DeepSeek-R1-Distill-Llama-8B</option>
-                        <option value="Qwen/QVQ-72B-Preview">QVQ-72B-Preview</option>
+                        <option value="Qwen/QVQ-72B-Preview">QVQ-72B-Preview</option> -->
                     </select>
                 </div>
-                
                 <div class="api-key-manager">
                     <button onclick="showApiKeyManager()" class="api-key-btn">
                         <span class="key-icon">🔑</span>
                         <span id="apiKeyStatus">API Key</span>
                     </button>
                 </div>
-                
                 <div class="theme-toggle">
                     <span>🌞</span>
                     <label class="switch">
@@ -42,6 +46,7 @@
                 </div>
             </div>
         </div>
+
         <div class="messages" id="messages"></div>
         <div id="loading" class="loading" style="display: none;">思考中...</div>
         <div class="input-container">

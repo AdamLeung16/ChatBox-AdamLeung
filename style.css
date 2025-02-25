@@ -51,8 +51,21 @@ body {
     padding: 0 10px;
 }
 
+.endpoint-select{
+    width: 20%;
+}
+
+.endpoint-select select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+}
+
 .model-select {
-    width: 45%;
+    width: 30%;
 }
 
 .model-select select {
@@ -65,7 +78,7 @@ body {
 }
 
 .api-key-manager {
-    width: 23%;
+    width: 18%;
 }
 
 .api-key-btn {
