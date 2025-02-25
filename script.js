@@ -1,6 +1,6 @@
 var endpoint_ApiKey = {
-    "https://api.deepseek.com/v1/chat/completions":"sk-81d0df44ff8444999a663505386913dc",
-    "https://api.siliconflow.cn/v1/chat/completions":"sk-rbzickexnungolrgsevneipmyebliqbddrsttvbcjncnnivm"
+    "https://api.deepseek.com/v1/chat/completions":'sk-81d0df44ff8444999a663505386913dc',
+    "https://api.siliconflow.cn/v1/chat/completions":'sk-rbzickexnungolrgsevneipmyebliqbddrsttvbcjncnnivm'
 };
 var currentApiKey = '';
 var endpoint_models = {
@@ -38,7 +38,6 @@ function models_from_endpoint(){
 }
 // 手动触发初始化
 document.getElementById('endpoint-selector').dispatchEvent(new Event('change'));
-
 
 // API Key 管理功能
 function showApiKeyManager() {
@@ -154,7 +153,7 @@ function displayMessage(role, message) {
     messageElement.className = `message ${role}`;
     
     const avatar = document.createElement('img');
-    avatar.src = role === 'user' ? 'user-avatar.png' : 'bot-avatar.png';
+    avatar.src = role === 'user' ? 'image/user.png' : 'image/bot.png';
     avatar.alt = role === 'user' ? 'User' : 'Bot';
 
     const messageContent = document.createElement('div');
@@ -177,7 +176,7 @@ function createMessage(role) {
     messageElement.className = `message ${role}`;
     
     const avatar = document.createElement('img');
-    avatar.src = role === 'user' ? 'user-avatar.png' : 'bot-avatar.png';
+    avatar.src = role === 'user' ? 'image/user.png' : 'image/bot.png';
     avatar.alt = role === 'user' ? 'User' : 'Bot';
 
     const messageContent = document.createElement('div');
