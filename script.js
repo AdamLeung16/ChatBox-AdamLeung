@@ -1,6 +1,6 @@
 var endpoint_ApiKey = {
     "https://api.deepseek.com/v1/chat/completions":atob('c2stODFkMGRmNDRmZjg0NDQ5OTlhNjYzNTA1Mzg2OTEzZGM='),
-    "https://api.siliconflow.cn/v1/chat/completions":atob(c2stcmJ6aWNrZXhudW5nb2xyZ3Nldm5laXBteWVibGlxYmRkcnN0dHZiY2puY25uaXZt)
+    "https://api.siliconflow.cn/v1/chat/completions":atob('c2stcmJ6aWNrZXhudW5nb2xyZ3Nldm5laXBteWVibGlxYmRkcnN0dHZiY2puY25uaXZt')
 };
 var currentApiKey = '';
 var endpoint_models = {
