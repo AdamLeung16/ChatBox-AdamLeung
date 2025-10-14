@@ -1,6 +1,6 @@
 var endpoint_ApiKey = {
-    "https://api.deepseek.com/v1/chat/completions":process.env.DEEPSEEK_API_KEY || '',
-    "https://api.siliconflow.cn/v1/chat/completions":process.env.SILICONFLOW_API_KEY || ''
+    "https://api.deepseek.com/v1/chat/completions":atob('c2stODFkMGRmNDRmZjg0NDQ5OTlhNjYzNTA1Mzg2OTEzZGM='),
+    "https://api.siliconflow.cn/v1/chat/completions":atob(c2stcmJ6aWNrZXhudW5nb2xyZ3Nldm5laXBteWVibGlxYmRkcnN0dHZiY2puY25uaXZt)
 };
 var currentApiKey = '';
 var endpoint_models = {
@@ -72,7 +72,7 @@ function updateApiKey() {
 function defaultApiKey() {
     if (confirm('确定要恢复成默认的 API Key 吗？')) {
         const endpointSelector = document.getElementById('endpoint-selector');
-        currentApiKey = endpoint_ApiKey[endpointSelector.value] || '';
+        currentApiKey = endpoint_ApiKey[endpointSelector.value];
 
         // 显示删除成功提示
         const statusElement = document.getElementById('currentKeyStatus');
@@ -87,7 +87,7 @@ function defaultApiKey() {
 
 function initialApiKey() {
     const endpointSelector = document.getElementById('endpoint-selector');
-    currentApiKey = endpoint_ApiKey[endpointSelector.value] || '';
+    currentApiKey = endpoint_ApiKey[endpointSelector.value];
 }
 
 
