@@ -319,10 +319,10 @@ function createMessage(role) {
     return [messageContent,messageElement];
 }
 function updateMessage(messageContent,content) {
-    messageContent.innerHTML += content;
+    messageContent.textContent += content;
 }
 function endMessage(messageContent,messageElement) {
-    messageContent.innerHTML = formatMessage(messageContent.innerHTML);
+    messageContent.innerHTML = formatMessage(messageContent.textContent);
     messageElement.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -363,26 +363,40 @@ async function sendMessage() {
         stream: true
     };
 
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(payload)
-    })
     try{
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP ${response.status}`);
+        }
+        if (!response.body) {
+            throw new Error('当前浏览器不支持流式响应。');
+        }
+
         // if(response.ok) displayMessage('bot', "ok.200");
         const reader = response.body.getReader();
         let decoder = new TextDecoder();
         let chunks = "";
+        let sseBuffer = "";
         let messageResult = createMessage('bot');
         let messageContent = messageResult[0];
         let messageElement = messageResult[1];
         while (true) {
             const { done, value } = await reader.read();
-            var text = decoder.decode(value, { stream: true });
             if (done) {
+                sseBuffer += decoder.decode();
+                let finalResult = extractContentFromSSE(sseBuffer, true);
+                for (let content of finalResult.contents) {
+                    updateMessage(messageContent, content);
+                    chunks += content;
+                }
                 endMessage(messageContent,messageElement);
                 messagesList.push({role: "assistant", content: chunks});
                 if (loadingElement) {
@@ -391,8 +405,10 @@ async function sendMessage() {
                 break;
             }
             // 解码每个分块的数据
-            let contents = extractContentFromSSE(text);
-            for(let content of contents){
+            sseBuffer += decoder.decode(value, { stream: true });
+            let sseResult = extractContentFromSSE(sseBuffer);
+            sseBuffer = sseResult.remaining;
+            for(let content of sseResult.contents){
                 updateMessage(messageContent,content);
                 chunks += content;
             }
@@ -440,23 +456,36 @@ async function sendMessage() {
     // });
 }
 
-function extractContentFromSSE(sseString) {
-    try {
-        const events = sseString.split('\n\n').slice(0,-1);
-        var contents = [];
-        for(var i=0;i<events.length;i++){
-            const jsonStr = events[i].slice(6);
-            if (jsonStr=="[DONE]"||jsonStr=="-alive") break;
+function extractContentFromSSE(sseString, flush = false) {
+    const normalized = sseString.replace(/\r\n/g, '\n');
+    const events = normalized.split('\n\n');
+    const remaining = flush ? '' : events.pop();
+    const completeEvents = flush ? events.filter(event => event.trim()) : events;
+    const contents = [];
+
+    for (let event of completeEvents) {
+        const dataLines = event
+            .split('\n')
+            .filter(line => line.startsWith('data:'))
+            .map(line => line.replace(/^data:\s?/, ''));
+
+        if (!dataLines.length) continue;
+
+        const jsonStr = dataLines.join('\n').trim();
+        if (!jsonStr || jsonStr === '[DONE]' || jsonStr === '-alive') continue;
+
+        try {
             const data = JSON.parse(jsonStr);
-            var content = data.choices[0].delta.content;
-            if (content==null||content=="") continue;
-            contents.push(content);
-      }
-      return contents;
-    } catch (error) {
-        displayMessage('bot', error.toString());
-        return [];
+            const content = data.choices?.[0]?.delta?.content
+                ?? data.choices?.[0]?.message?.content
+                ?? '';
+            if (content) contents.push(content);
+        } catch (error) {
+            console.warn('Skipped malformed SSE event:', error, jsonStr);
+        }
     }
+
+    return { contents, remaining };
 }
 
 // 添加主题切换功能
