@@ -38,8 +38,9 @@ jobs:
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
+          DEFAULT_API_PASSWORD: ${{ secrets.DEFAULT_API_PASSWORD }}
         run: |
-          node -e 'const fs = require("fs"); const apiKeys = {"https://api.deepseek.com/v1/chat/completions": process.env.DEEPSEEK_API_KEY || "", "https://api.siliconflow.cn/v1/chat/completions": process.env.SILICONFLOW_API_KEY || ""}; fs.writeFileSync("_site/env.js", `window.CHATBOX_API_KEYS = ${JSON.stringify(apiKeys)};\n`);'
+          node -e 'const fs = require("fs"); const crypto = require("crypto"); const apiKeys = {"https://api.deepseek.com/v1/chat/completions": process.env.DEEPSEEK_API_KEY || "", "https://api.siliconflow.cn/v1/chat/completions": process.env.SILICONFLOW_API_KEY || ""}; const passwordHash = process.env.DEFAULT_API_PASSWORD ? crypto.createHash("sha256").update(process.env.DEFAULT_API_PASSWORD).digest("hex") : ""; fs.writeFileSync("_site/env.js", [`window.CHATBOX_API_KEYS = ${JSON.stringify(apiKeys)};`, `window.CHATBOX_DEFAULT_KEY_PASSWORD_HASH = ${JSON.stringify(passwordHash)};`, ""].join("\n"));'
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

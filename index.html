@@ -67,9 +67,13 @@
                 <div class="api-key-input">
                     <input type="password" id="apiKeyInput" placeholder="输入新的 API Key" autocomplete="off"/>
                 </div>
+                <div class="api-key-input default-key-unlock">
+                    <input type="password" id="defaultKeyPasswordInput" placeholder="输入默认 Key 解锁密码" autocomplete="off"/>
+                </div>
+                <p id="defaultKeyUnlockStatus" class="default-key-status">默认 API Key 需要密码解锁后使用。</p>
                 <div class="api-key-actions">
                     <button onclick="updateApiKey()" class="primary-btn">更新</button>
-                    <button onclick="defaultApiKey()" class="danger-btn">恢复默认</button>
+                    <button onclick="defaultApiKey()" class="danger-btn">解锁默认</button>
                 </div>
             </div>
         </div>

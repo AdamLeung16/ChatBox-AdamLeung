@@ -380,12 +380,27 @@ body {
     gap: 8px;
 }
 
+.default-key-unlock {
+    margin-top: 10px;
+}
+
 .api-key-input input {
     flex: 1;
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+}
+
+.default-key-status {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.default-key-status.success {
+    color: #16a34a;
 }
 
 .api-key-actions {
@@ -696,6 +711,20 @@ body.dark-mode.dark-mode {
 
 .dark-mode .close-btn {
     color: #aaa;
+}
+
+.dark-mode .api-key-input input {
+    background-color: #111827;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+.dark-mode .default-key-status {
+    color: #94a3b8;
+}
+
+.dark-mode .default-key-status.success {
+    color: #86efac;
 }
 
 .primary-btn, .danger-btn {

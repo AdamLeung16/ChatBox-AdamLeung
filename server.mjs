@@ -1,5 +1,6 @@
 import { createReadStream, existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { createHash } from 'node:crypto';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -40,8 +41,15 @@ function createEnvJs() {
         'https://api.deepseek.com/v1/chat/completions': env.DEEPSEEK_API_KEY || '',
         'https://api.siliconflow.cn/v1/chat/completions': env.SILICONFLOW_API_KEY || ''
     };
+    const defaultKeyPasswordHash = env.DEFAULT_API_PASSWORD
+        ? createHash('sha256').update(env.DEFAULT_API_PASSWORD).digest('hex')
+        : '';
 
-    return `window.CHATBOX_API_KEYS = ${JSON.stringify(apiKeys)};\n`;
+    return [
+        `window.CHATBOX_API_KEYS = ${JSON.stringify(apiKeys)};`,
+        `window.CHATBOX_DEFAULT_KEY_PASSWORD_HASH = ${JSON.stringify(defaultKeyPasswordHash)};`,
+        ''
+    ].join('\n');
 }
 
 createServer((request, response) => {

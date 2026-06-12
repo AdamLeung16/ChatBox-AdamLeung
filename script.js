@@ -1,5 +1,7 @@
 const endpoint_ApiKey = window.CHATBOX_API_KEYS || {};
+const defaultApiPasswordHash = window.CHATBOX_DEFAULT_KEY_PASSWORD_HASH || '';
 var currentApiKey = '';
+var defaultApiKeyUnlocked = false;
 var endpoint_models = {
     "https://api.deepseek.com/v1/chat/completions": [
         { value: "deepseek-v4-flash", text: "DeepSeek-V4-Flash" },
@@ -55,7 +57,9 @@ function updateApiKey() {
     const apiKey = input.value.trim();
 
     if (apiKey) {
+        defaultApiKeyUnlocked = false;
         currentApiKey = apiKey;
+        setDefaultKeyStatus('正在使用手动输入的 API Key。', true);
 
         // 显示成功提示
         updateApiKeyStatus();
@@ -68,24 +72,62 @@ function updateApiKey() {
     }
 }
 
-function defaultApiKey() {
-    if (confirm('确定要恢复成默认的 API Key 吗？')) {
-        const endpointSelector = document.getElementById('endpoint-selector');
-        currentApiKey = endpoint_ApiKey[endpointSelector.value];
+function setDefaultKeyStatus(message, isSuccess = false) {
+    const statusElement = document.getElementById('defaultKeyUnlockStatus');
+    if (!statusElement) return;
+    statusElement.textContent = message;
+    statusElement.classList.toggle('success', isSuccess);
+}
 
-        // 显示删除成功提示
-        const statusElement = document.getElementById('currentKeyStatus');
-        updateApiKeyStatus();
+async function sha256Hex(text) {
+    const encoded = new TextEncoder().encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+    return Array.from(new Uint8Array(hashBuffer))
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('');
+}
 
-        setTimeout(() => {
-            hideApiKeyManager();
-        }, 1000);
+async function defaultApiKey() {
+    const endpointSelector = document.getElementById('endpoint-selector');
+    const passwordInput = document.getElementById('defaultKeyPasswordInput');
+    const defaultKey = endpoint_ApiKey[endpointSelector.value] || '';
+    const password = passwordInput ? passwordInput.value.trim() : '';
+
+    if (!defaultKey) {
+        setDefaultKeyStatus('当前接口没有配置默认 API Key。');
+        return;
     }
+
+    if (!defaultApiPasswordHash) {
+        setDefaultKeyStatus('默认 Key 解锁密码尚未配置。');
+        return;
+    }
+
+    if (!password) {
+        setDefaultKeyStatus('请输入默认 Key 解锁密码。');
+        return;
+    }
+
+    const passwordHash = await sha256Hex(password);
+    if (passwordHash !== defaultApiPasswordHash) {
+        setDefaultKeyStatus('密码不正确，默认 API Key 未解锁。');
+        return;
+    }
+
+    defaultApiKeyUnlocked = true;
+    currentApiKey = defaultKey;
+    if (passwordInput) passwordInput.value = '';
+    setDefaultKeyStatus('默认 API Key 已解锁。', true);
+    updateApiKeyStatus();
+
+    setTimeout(() => {
+        hideApiKeyManager();
+    }, 800);
 }
 
 function initialApiKey() {
     const endpointSelector = document.getElementById('endpoint-selector');
-    currentApiKey = endpoint_ApiKey[endpointSelector.value] || '';
+    currentApiKey = defaultApiKeyUnlocked ? endpoint_ApiKey[endpointSelector.value] || '' : '';
     updateApiKeyStatus();
 }
 
@@ -103,11 +145,11 @@ function updateApiKeyStatus() {
     if (currentApiKey) {
         statusElement.textContent = maskApiKey(currentApiKey);
         statusElement.style.color = '#28a745';
-        apiKeyStatus.textContent = 'API Key 已配置';
+        apiKeyStatus.textContent = defaultApiKeyUnlocked ? '默认 Key 已解锁' : 'API Key 已配置';
     } else {
         statusElement.textContent = '未配置';
         statusElement.style.color = '#dc3545';
-        apiKeyStatus.textContent = 'API Key 未配置';
+        apiKeyStatus.textContent = 'API Key 未解锁';
     }
 }
 
@@ -353,7 +395,7 @@ async function sendMessage() {
         if (loadingElement) {
             loadingElement.style.display = 'none';
         }
-        displayMessage('bot', '当前接口未配置 API Key。请在本地 .env 或 GitHub Secrets 中配置，或在 API Key 管理中手动输入。');
+        displayMessage('bot', '当前接口未配置或未解锁 API Key。请在 API Key 管理中输入自己的 Key，或输入默认 Key 解锁密码。');
         return;
     }
 
