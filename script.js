@@ -3,18 +3,18 @@ var currentApiKey = '';
 var endpoint_models = {
     "https://api.deepseek.com/v1/chat/completions": [
         { value: "deepseek-v4-flash", text: "DeepSeek-V4-Flash" },
-        { value: "deepseek-v4-pro", text: "DeepSeek-V4-Pro" },
-        { value: "deepseek-chat", text: "DeepSeek-V3 / deepseek-chat（旧兼容）" },
-        { value: "deepseek-reasoner", text: "DeepSeek-R1 / deepseek-reasoner（旧兼容）" },
+        { value: "deepseek-v4-pro", text: "DeepSeek-V4-Pro" }
     ],
     "https://api.siliconflow.cn/v1/chat/completions": [
+        { value: "deepseek-ai/DeepSeek-V4-Flash", text: "DeepSeek-V4-Flash" },
+        { value: "deepseek-ai/DeepSeek-V4-Pro", text: "DeepSeek-V4-Pro" },
+        { value: "Pro/deepseek-ai/DeepSeek-V3.2", text: "DeepSeek-V3.2 Pro" },
         { value: "deepseek-ai/DeepSeek-V3.2", text: "DeepSeek-V3.2" },
-        { value: "Pro/deepseek-ai/DeepSeek-R1", text: "DeepSeek-R1 Pro" },
-        { value: "deepseek-ai/DeepSeek-R1", text: "DeepSeek-R1" },
-        { value: "deepseek-ai/DeepSeek-V3", text: "DeepSeek-V3" },
-        { value: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B", text: "DeepSeek-R1-Distill-Llama-70B" },
-        { value: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B", text: "DeepSeek-R1-Distill-Llama-8B" },
-        { value: "Qwen/QVQ-72B-Preview", text: "QVQ-72B-Preview（旧）" }
+        { value: "Qwen/Qwen3.6-35B-A3B", text: "Qwen3.6-35B-A3B" },
+        { value: "Qwen/Qwen3.6-27B", text: "Qwen3.6-27B" },
+        { value: "Qwen/Qwen3.5-397B-A17B", text: "Qwen3.5-397B-A17B" },
+        { value: "Pro/zai-org/GLM-5.1", text: "GLM-5.1 Pro" },
+        { value: "Pro/moonshotai/Kimi-K2.6", text: "Kimi-K2.6 Pro" }
     ]
 };
 

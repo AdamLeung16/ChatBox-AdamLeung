@@ -28,17 +28,21 @@ For GitHub Pages deployment:
 
 Note: GitHub Secrets keep the keys out of the repository, but a pure static GitHub Pages app still sends the runtime key to the browser. Use a backend proxy if the key must be truly hidden from users.
 
-### 1 Model supported
+### Supported models
 
-| Platform                 | Model       |
-| ------------------------ | ----------- |
-| **DeepSeek (official)** | Deepseek-V3 |
-|                          | DeepSeek-R1 |
+| Platform                 | Model             |
+| ------------------------ | ----------------- |
+| **DeepSeek (official)** | DeepSeek-V4-Flash |
+|                          | DeepSeek-V4-Pro   |
 
-| Platform                  | Model                         |
-| ------------------------- | ----------------------------- |
-| **SiliconFlow (bridge)** | Deepseek-V3                   |
-|                           | Deepseek-R1                   |
-|                           | DeepSeek-R1-Distill-Llama-70B |
-|                           | DeepSeek-R1-Distill-Llama-8B  |
-|                           | QVQ-72B-Preview               |
+| Platform                  | Model                  |
+| ------------------------- | ---------------------- |
+| **SiliconFlow (bridge)** | DeepSeek-V4-Flash      |
+|                           | DeepSeek-V4-Pro        |
+|                           | DeepSeek-V3.2 Pro      |
+|                           | DeepSeek-V3.2          |
+|                           | Qwen3.6-35B-A3B        |
+|                           | Qwen3.6-27B            |
+|                           | Qwen3.5-397B-A17B      |
+|                           | GLM-5.1 Pro            |
+|                           | Kimi-K2.6 Pro          |
