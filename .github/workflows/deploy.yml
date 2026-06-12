@@ -1,0 +1,51 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare site files
+        run: |
+          mkdir -p _site
+          cp index.html script.js style.css _site/
+          cp -R image _site/
+
+      - name: Generate runtime config
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
+        run: |
+          node -e 'const fs = require("fs"); const apiKeys = {"https://api.deepseek.com/v1/chat/completions": process.env.DEEPSEEK_API_KEY || "", "https://api.siliconflow.cn/v1/chat/completions": process.env.SILICONFLOW_API_KEY || ""}; fs.writeFileSync("_site/env.js", `window.CHATBOX_API_KEYS = ${JSON.stringify(apiKeys)};\n`);'
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

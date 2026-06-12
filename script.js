@@ -1,19 +1,20 @@
-var endpoint_ApiKey = {
-    "https://api.deepseek.com/v1/chat/completions":atob('c2stODFkMGRmNDRmZjg0NDQ5OTlhNjYzNTA1Mzg2OTEzZGM='),
-    "https://api.siliconflow.cn/v1/chat/completions":atob('c2stcmJ6aWNrZXhudW5nb2xyZ3Nldm5laXBteWVibGlxYmRkcnN0dHZiY2puY25uaXZt')
-};
+const endpoint_ApiKey = window.CHATBOX_API_KEYS || {};
 var currentApiKey = '';
 var endpoint_models = {
     "https://api.deepseek.com/v1/chat/completions": [
-        { value: "deepseek-chat", text: "Deepseek-V3" },
-        { value: "deepseek-reasoner", text: "DeepSeek-R1" },
+        { value: "deepseek-v4-flash", text: "DeepSeek-V4-Flash" },
+        { value: "deepseek-v4-pro", text: "DeepSeek-V4-Pro" },
+        { value: "deepseek-chat", text: "DeepSeek-V3 / deepseek-chat（旧兼容）" },
+        { value: "deepseek-reasoner", text: "DeepSeek-R1 / deepseek-reasoner（旧兼容）" },
     ],
     "https://api.siliconflow.cn/v1/chat/completions": [
-        { value: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B", text: "DeepSeek-R1-Distill-Llama-70B" },
-        { value: "deepseek-ai/DeepSeek-R1", text: "Deepseek-R1" },
+        { value: "deepseek-ai/DeepSeek-V3.2", text: "DeepSeek-V3.2" },
+        { value: "Pro/deepseek-ai/DeepSeek-R1", text: "DeepSeek-R1 Pro" },
+        { value: "deepseek-ai/DeepSeek-R1", text: "DeepSeek-R1" },
         { value: "deepseek-ai/DeepSeek-V3", text: "DeepSeek-V3" },
+        { value: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B", text: "DeepSeek-R1-Distill-Llama-70B" },
         { value: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B", text: "DeepSeek-R1-Distill-Llama-8B" },
-        { value: "Qwen/QVQ-72B-Preview", text: "QVQ-72B-Preview" }
+        { value: "Qwen/QVQ-72B-Preview", text: "QVQ-72B-Preview（旧）" }
     ]
 };
 
@@ -57,9 +58,7 @@ function updateApiKey() {
         currentApiKey = apiKey;
 
         // 显示成功提示
-        const statusElement = document.getElementById('currentKeyStatus');
-        statusElement.textContent = apiKey;
-        statusElement.style.color = '#28a745';
+        updateApiKeyStatus();
 
         setTimeout(() => {
             hideApiKeyManager();
@@ -76,8 +75,7 @@ function defaultApiKey() {
 
         // 显示删除成功提示
         const statusElement = document.getElementById('currentKeyStatus');
-        statusElement.textContent = 'sk-***...***';
-        statusElement.style.color = '#dc3545';
+        updateApiKeyStatus();
 
         setTimeout(() => {
             hideApiKeyManager();
@@ -87,63 +85,193 @@ function defaultApiKey() {
 
 function initialApiKey() {
     const endpointSelector = document.getElementById('endpoint-selector');
-    currentApiKey = endpoint_ApiKey[endpointSelector.value];
+    currentApiKey = endpoint_ApiKey[endpointSelector.value] || '';
+    updateApiKeyStatus();
+}
+
+function maskApiKey(apiKey) {
+    if (!apiKey) return '未配置';
+    if (apiKey.length <= 10) return '已配置';
+    return `${apiKey.slice(0, 3)}***${apiKey.slice(-4)}`;
+}
+
+function updateApiKeyStatus() {
+    const statusElement = document.getElementById('currentKeyStatus');
+    const apiKeyStatus = document.getElementById('apiKeyStatus');
+    if (!statusElement || !apiKeyStatus) return;
+
+    if (currentApiKey) {
+        statusElement.textContent = maskApiKey(currentApiKey);
+        statusElement.style.color = '#28a745';
+        apiKeyStatus.textContent = 'API Key 已配置';
+    } else {
+        statusElement.textContent = '未配置';
+        statusElement.style.color = '#dc3545';
+        apiKeyStatus.textContent = 'API Key 未配置';
+    }
 }
 
 
-// 格式化消息文本
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function formatInlineMarkdown(text) {
+    return escapeHtml(text)
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+        .replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+}
+
+function isTableSeparator(line) {
+    return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+}
+
+function isTableRow(line) {
+    return line.includes('|') && line.split('|').filter(cell => cell.trim()).length >= 2;
+}
+
+function splitTableRow(line) {
+    return line
+        .trim()
+        .replace(/^\|/, '')
+        .replace(/\|$/, '')
+        .split('|')
+        .map(cell => cell.trim());
+}
+
+function renderTable(lines) {
+    const headerCells = splitTableRow(lines[0]);
+    const bodyRows = lines.slice(2).filter(isTableRow).map(splitTableRow);
+    const head = headerCells.map(cell => `<th>${formatInlineMarkdown(cell)}</th>`).join('');
+    const body = bodyRows
+        .map(row => `<tr>${row.map(cell => `<td>${formatInlineMarkdown(cell)}</td>`).join('')}</tr>`)
+        .join('');
+
+    return `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function collectParagraph(lines, startIndex) {
+    const paragraphLines = [];
+    let index = startIndex;
+
+    while (index < lines.length) {
+        const line = lines[index];
+        const trimmed = line.trim();
+        if (
+            !trimmed ||
+            trimmed.startsWith('```') ||
+            /^#{1,6}\s+/.test(trimmed) ||
+            /^>\s?/.test(trimmed) ||
+            /^[-*]\s+/.test(trimmed) ||
+            /^\d+\.\s+/.test(trimmed) ||
+            (isTableRow(trimmed) && isTableSeparator(lines[index + 1] || ''))
+        ) {
+            break;
+        }
+        paragraphLines.push(trimmed);
+        index++;
+    }
+
+    return {
+        html: `<p>${formatInlineMarkdown(paragraphLines.join(' '))}</p>`,
+        nextIndex: index
+    };
+}
+
+// 格式化 AI 消息文本，支持常见 Markdown 结构
 function formatMessage(text) {
     if (!text) return '';
-    
-    // 处理标题和换行
-    let lines = text.split('\n');
-    let formattedLines = lines.map(line => {
-        // 处理标题（**文本**）
-        line = line.replace(/\*\*(.*?)\*\*/g, '<span class="bold-text">$1</span>');
-        return line;
-    });
-    
-    // 将 ### 替换为换行，并确保每个部分都是一个段落
-    let processedText = formattedLines.join('\n');
-    let sections = processedText
-        .split('###')
-        .filter(section => section.trim())
-        .map(section => {
-            // 移除多余的换行和空格
-            let lines = section.split('\n').filter(line => line.trim());
-            
-            if (lines.length === 0) return '';
-            
-            // 处理每个部分
-            let result = '';
-            let currentIndex = 0;
-            
-            while (currentIndex < lines.length) {
-                let line = lines[currentIndex].trim();
-                
-                // 如果是数字开头（如 "1.")
-                if (/^\d+\./.test(line)) {
-                    result += `<p class="section-title">${line}</p>`;
-                }
-                // 如果是小标题（以破折号开头）
-                else if (line.startsWith('-')) {
-                    result += `<p class="subsection"><span class="bold-text">${line.replace(/^-/, '').trim()}</span></p>`;
-                }
-                // 如果是正文（包含冒号的行）
-                else if (line.includes(':')) {
-                    let [subtitle, content] = line.split(':').map(part => part.trim());
-                    result += `<p><span class="subtitle">${subtitle}</span>: ${content}</p>`;
-                }
-                // 普通文本
-                else {
-                    result += `<p>${line}</p>`;
-                }
-                currentIndex++;
+
+    const lines = text.replace(/\r\n/g, '\n').split('\n');
+    const htmlParts = [];
+    let index = 0;
+
+    while (index < lines.length) {
+        const line = lines[index];
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+            index++;
+            continue;
+        }
+
+        if (trimmed.startsWith('```')) {
+            const language = trimmed.replace(/^```/, '').trim();
+            const codeLines = [];
+            index++;
+            while (index < lines.length && !lines[index].trim().startsWith('```')) {
+                codeLines.push(lines[index]);
+                index++;
             }
-            return result;
-        });
-    
-    return sections.join('');
+            if (index < lines.length) index++;
+            htmlParts.push(
+                `<pre><code data-language="${escapeHtml(language)}">${escapeHtml(codeLines.join('\n'))}</code></pre>`
+            );
+            continue;
+        }
+
+        if (isTableRow(trimmed) && isTableSeparator(lines[index + 1] || '')) {
+            const tableLines = [trimmed, lines[index + 1].trim()];
+            index += 2;
+            while (index < lines.length && isTableRow(lines[index].trim())) {
+                tableLines.push(lines[index].trim());
+                index++;
+            }
+            htmlParts.push(renderTable(tableLines));
+            continue;
+        }
+
+        const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+        if (headingMatch) {
+            const level = Math.min(Math.max(headingMatch[1].length, 3), 6);
+            htmlParts.push(`<h${level}>${formatInlineMarkdown(headingMatch[2])}</h${level}>`);
+            index++;
+            continue;
+        }
+
+        if (/^>\s?/.test(trimmed)) {
+            const quoteLines = [];
+            while (index < lines.length && /^>\s?/.test(lines[index].trim())) {
+                quoteLines.push(lines[index].trim().replace(/^>\s?/, ''));
+                index++;
+            }
+            htmlParts.push(`<blockquote>${quoteLines.map(lineText => `<p>${formatInlineMarkdown(lineText)}</p>`).join('')}</blockquote>`);
+            continue;
+        }
+
+        if (/^\d+\.\s+/.test(trimmed)) {
+            const items = [];
+            while (index < lines.length && /^\d+\.\s+/.test(lines[index].trim())) {
+                items.push(lines[index].trim().replace(/^\d+\.\s+/, ''));
+                index++;
+            }
+            htmlParts.push(`<ol>${items.map(item => `<li>${formatInlineMarkdown(item)}</li>`).join('')}</ol>`);
+            continue;
+        }
+
+        if (/^[-*]\s+/.test(trimmed)) {
+            const items = [];
+            while (index < lines.length && /^[-*]\s+/.test(lines[index].trim())) {
+                items.push(lines[index].trim().replace(/^[-*]\s+/, ''));
+                index++;
+            }
+            htmlParts.push(`<ul>${items.map(item => `<li>${formatInlineMarkdown(item)}</li>`).join('')}</ul>`);
+            continue;
+        }
+
+        const paragraph = collectParagraph(lines, index);
+        htmlParts.push(paragraph.html);
+        index = paragraph.nextIndex;
+    }
+
+    return htmlParts.join('');
 }
 
 // 显示静态消息
@@ -160,7 +288,11 @@ function displayMessage(role, message) {
     messageContent.className = 'message-content';
     
     // 用户消息直接显示，机器人消息需要格式化
-    messageContent.innerHTML = role === 'user' ? message : formatMessage(message);
+    if (role === 'user') {
+        messageContent.textContent = message;
+    } else {
+        messageContent.innerHTML = formatMessage(message);
+    }
 
     messageElement.appendChild(avatar);
     messageElement.appendChild(messageContent);
@@ -208,6 +340,7 @@ async function sendMessage() {
     displayMessage('user', message);
     messagesList.push({role: "user", content: message});
     inputElement.value = '';
+    resizeChatInput(inputElement);
 
     // 显示加载动画
     const loadingElement = document.getElementById('loading');
@@ -216,6 +349,13 @@ async function sendMessage() {
     }
 
     const apiKey = currentApiKey;
+    if (!apiKey) {
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+        displayMessage('bot', '当前接口未配置 API Key。请在本地 .env 或 GitHub Secrets 中配置，或在 API Key 管理中手动输入。');
+        return;
+    }
 
     const payload = {
         model: currentModel,
@@ -367,8 +507,18 @@ window.onclick = function(event) {
     }
 }
 
+function resizeChatInput(inputElement) {
+    inputElement.style.height = 'auto';
+    inputElement.style.height = `${Math.min(inputElement.scrollHeight, 180)}px`;
+}
+
+const chatInput = document.getElementById('chat-input');
+chatInput.addEventListener('input', function() {
+    resizeChatInput(this);
+});
+
 // 添加回车发送功能
-document.getElementById('chat-input').addEventListener('keypress', function(event) {
+chatInput.addEventListener('keydown', function(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         sendMessage();
